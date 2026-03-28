@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iPhone Rain Alarm Shortcut — HK Rainfall Alert</title>
+  <style>
+    :root{--bg:#0f172a;--card:#1e293b;--border:#334155;--text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;--green:#22c55e;--yellow:#facc15;--orange:#fb923c;--red:#ef4444;--surface:rgba(255,255,255,.04);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:16px 16px 32px;}
+    .container{width:100%;max-width:520px;}
+    .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--accent);text-decoration:none;font-size:.9rem;font-weight:500;margin-bottom:16px;padding:8px 0;}
+    .back-link:hover{opacity:.8;}
+    header{text-align:center;margin-bottom:24px;}
+    header h1{font-size:1.5rem;font-weight:700;color:var(--accent);line-height:1.3;}
+    header p{color:var(--muted);font-size:.88rem;margin-top:6px;line-height:1.5;}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;}
+    .card h2{font-size:.92rem;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em;}
+    .card h3{font-size:1rem;font-weight:600;color:var(--text);margin:16px 0 8px;}
+    .card h3:first-child{margin-top:0;}
+    p,li{font-size:.9rem;line-height:1.65;color:var(--text);}
+    .card p{margin-bottom:8px;}
+    .card p:last-child{margin-bottom:0;}
+
+    /* Steps */
+    .steps{list-style:none;counter-reset:step;padding:0;}
+    .steps li{counter-increment:step;position:relative;padding:12px 12px 12px 48px;margin-bottom:8px;background:var(--surface);border-radius:10px;font-size:.88rem;line-height:1.6;}
+    .steps li::before{content:counter(step);position:absolute;left:12px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0f172a;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;}
+    .steps li strong{color:var(--accent);}
+
+    /* Code blocks */
+    .code-block{position:relative;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin:10px 0;font-family:'SF Mono',Menlo,monospace;font-size:.8rem;line-height:1.5;color:var(--green);overflow-x:auto;word-break:break-all;white-space:pre-wrap;}
+    .copy-btn{position:absolute;top:8px;right:8px;background:var(--accent);color:#0f172a;border:none;border-radius:6px;padding:4px 10px;font-size:.72rem;font-weight:600;cursor:pointer;transition:opacity .2s;}
+    .copy-btn:hover{opacity:.85;}
+    .copy-btn.copied{background:var(--green);}
+
+    /* District list */
+    .district-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0;}
+    .district-tag{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:.78rem;color:var(--text);}
+
+    /* Info callouts */
+    .callout{border-radius:10px;padding:12px 14px;font-size:.84rem;line-height:1.6;margin:12px 0;}
+    .callout-info{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);color:var(--accent);}
+    .callout-warn{background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.2);color:var(--yellow);}
+    .callout-tip{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--green);}
+
+    footer{color:var(--muted);font-size:.75rem;text-align:center;margin-top:12px;max-width:520px;}
+    footer a{color:var(--accent);text-decoration:none;}
+  </style>
+</head>
+<body>
+<div class="container">
+
+<a class="back-link" href="index.html">‹ Back to Rainfall Dashboard</a>
+
+<header>
+  <h1>⏰ iPhone Rain Alarm Shortcut</h1>
+  <p>Get woken up by an alarm when it's raining in your district — using Apple Shortcuts + HKO Open Data</p>
+</header>
+
+<div class="card">
+  <h2>How It Works</h2>
+  <p>This Shortcut calls the HKO real-time rainfall API directly from your iPhone. If rainfall in your district exceeds your threshold, it creates an alarm set to ring 1 minute from now — effectively waking you up with rain info as the alarm label.</p>
+  <div class="callout callout-info">No server or third-party app needed. Everything runs locally on your iPhone via Apple Shortcuts + Clock app.</div>
+</div>
+
+<div class="card">
+  <h2>📡 The API</h2>
+  <p>The Shortcut fetches real-time rainfall data from this HKO endpoint:</p>
+  <div class="code-block" id="api-url">https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en<button class="copy-btn" onclick="copyURL(this)">Copy</button></div>
+  <p>This returns JSON with a <code style="color:var(--accent)">rainfall.data</code> array. Each entry has:</p>
+  <div class="code-block">{
+  "unit": "mm",
+  "place": "Sha Tin",
+  "max": 2.5,
+  "main": "FALSE"
+}</div>
+  <p><strong>place</strong> = district name, <strong>max</strong> = maximum rainfall (mm) in the past hour.</p>
+</div>
+
+<div class="card">
+  <h2>🔧 Build the Shortcut</h2>
+  <p>Open the <strong>Shortcuts</strong> app and create a new Shortcut. Add each action below in order:</p>
+
+  <h3>Part 1: Fetch &amp; Parse Rainfall</h3>
+  <ol class="steps">
+    <li>Add <strong>Get Contents of URL</strong><br>
+      URL: <code style="color:var(--green);font-size:.8rem">https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en</code><br>
+      Method: <strong>GET</strong></li>
+    <li>Add <strong>Get Dictionary from Input</strong><br>
+      (This parses the JSON response into a dictionary)</li>
+    <li>Add <strong>Get Dictionary Value</strong><br>
+      Key: <strong>rainfall</strong></li>
+    <li>Add <strong>Get Dictionary Value</strong><br>
+      Key: <strong>data</strong></li>
+  </ol>
+
+  <h3>Part 2: Find Your District</h3>
+  <ol class="steps" style="counter-reset:step 4">
+    <li>Add <strong>Repeat with Each</strong> (over the data array)<br>
+      Inside the loop:</li>
+    <li>Add <strong>Get Dictionary Value</strong><br>
+      Key: <strong>place</strong> from <em>Repeat Item</em></li>
+    <li>Add <strong>If</strong> — <em>place</em> <strong>contains</strong> your district name<br>
+      (e.g., <code style="color:var(--green)">Sha Tin</code> — see district list below)</li>
+    <li>Add <strong>Get Dictionary Value</strong><br>
+      Key: <strong>max</strong> from <em>Repeat Item</em></li>
+    <li>Add <strong>Set Variable</strong><br>
+      Name: <strong>rainfall</strong>, Value: the max value</li>
+    <li>Add <strong>End If</strong></li>
+    <li>Add <strong>End Repeat</strong></li>
+  </ol>
+
+  <h3>Part 3: Create Alarm if Raining</h3>
+  <ol class="steps" style="counter-reset:step 11">
+    <li>Add <strong>If</strong> — <em>rainfall</em> <strong>is greater than</strong> your threshold<br>
+      (e.g., <code style="color:var(--green)">0.5</code> for light rain, <code style="color:var(--green)">5</code> for moderate)</li>
+    <li>Add <strong>Date</strong><br>
+      Set to <strong>Current Date</strong></li>
+    <li>Add <strong>Adjust Date</strong><br>
+      Add <strong>1 Minute</strong> to <em>Date</em></li>
+    <li>Add <strong>Create Alarm</strong><br>
+      Time: the adjusted date<br>
+      Label: <strong>🌧 Rain Alert! [rainfall]mm in [your district]</strong><br>
+      <em>(Use the rainfall variable in the label text)</em></li>
+    <li>Add <strong>End If</strong></li>
+  </ol>
+
+  <div class="callout callout-tip">
+    <strong>Tip:</strong> Name your Shortcut something memorable like "Rain Check" so it's easy to find in Automations.
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔁 Automate It (Every 15 Minutes)</h2>
+  <p>To run the check automatically in the background:</p>
+  <ol class="steps">
+    <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> tab</li>
+    <li>Tap <strong>+</strong> → <strong>Time of Day</strong></li>
+    <li>Set a start time (e.g., <strong>6:00 AM</strong>)</li>
+    <li>Choose <strong>Repeat: Every 15 Minutes</strong><br>
+      (If not available, set <strong>Daily</strong> and create multiple automations at 15-min intervals for your key hours, e.g., 6:00, 6:15, 6:30…)</li>
+    <li>Select <strong>Run Immediately</strong> (disable "Ask Before Running")</li>
+    <li>Choose your <strong>Rain Check</strong> shortcut as the action</li>
+  </ol>
+
+  <div class="callout callout-warn">
+    <strong>Note on iOS limitations:</strong> iOS Automations with "Time of Day" may not support 15-minute repeat natively on all versions. Alternative: create separate automations for each time slot you care about (e.g., 6:00, 6:15, 6:30, 6:45, 7:00 AM). This gives you reliable checks during your wake-up window.
+  </div>
+
+  <div class="callout callout-info">
+    <strong>Recommended schedule for morning rain checks:</strong><br>
+    Set automations at 6:00, 6:15, 6:30, 6:45, and 7:00 AM — covering a full hour before most commutes. The alarm rings only if it's actually raining, so false triggers are rare.
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 HKO District Names</h2>
+  <p>Use one of these exact names in step 7 (the "contains" check). These are the place names returned by the HKO API:</p>
+  <div class="district-grid" id="district-grid"></div>
+  <div class="callout callout-tip" style="margin-top:12px">
+    <strong>Tip:</strong> Use a short, unique substring for matching. For example, use "Sha Tin" instead of trying to match the full string. The "contains" check in Shortcuts is case-insensitive.
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Testing</h2>
+  <ol class="steps">
+    <li>Open your Shortcut and tap <strong>▶ Play</strong></li>
+    <li>If it's currently raining in your district, an alarm should appear in the <strong>Clock</strong> app within seconds</li>
+    <li>If it's not raining, temporarily change your threshold to <strong>0</strong> to test, then change it back</li>
+    <li>Check the Clock app — the alarm will show with your rain info as the label</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h2>❓ Troubleshooting</h2>
+  <h3>Shortcut fails with "no data"</h3>
+  <p>Make sure the API URL is exactly correct. Tap the "Copy" button above and paste it directly. The API is public and doesn't require authentication.</p>
+
+  <h3>Alarm doesn't ring</h3>
+  <p>Check that your iPhone isn't in Silent mode (the physical switch on the side). Alarms respect the ringer switch on some iOS versions. Also ensure Do Not Disturb allows alarms.</p>
+
+  <h3>"contains" doesn't match</h3>
+  <p>Try a shorter substring. For example, use "Kwun Tong" instead of "Kwun Tong District". The API returns place names without "District" suffix.</p>
+
+  <h3>Automation doesn't run</h3>
+  <p>Go to Settings → Shortcuts → Advanced → enable "Allow Running Scripts". Also make sure "Ask Before Running" is <strong>off</strong> for your automation.</p>
+</div>
+
+</div>
+
+<footer>
+  <a href="index.html">← Back to HK Rainfall Alert</a> · Data: <a href="https://www.hko.gov.hk/en/abouthko/opendata_intro.htm" target="_blank">HKO Open Data</a>
+</footer>
+
+<script>
+// District names from the HKO API
+const HKO_DISTRICTS = [
+  'Central & Western',
+  'Eastern',
+  'Southern',
+  'Wan Chai',
+  'Kowloon City',
+  'Kwun Tong',
+  'Sham Shui Po',
+  'Wong Tai Sin',
+  'Yau Tsim Mong',
+  'Islands',
+  'Kwai Tsing',
+  'North',
+  'Sai Kung',
+  'Sha Tin',
+  'Tai Po',
+  'Tsuen Wan',
+  'Tuen Mun',
+  'Yuen Long',
+  'Happy Valley',
+  'Wong Chuk Hang',
+  'Stanley',
+  'Kai Tak',
+  'Kowloon Tong',
+  'Tseung Kwan O',
+  'Tung Chung',
+  'Cheung Chau',
+  'Sai Wan Ho',
+  'Shek Kong',
+  'Tsing Yi',
+  'Lau Fau Shan',
+  'Tai Mei Tuk',
+  'Tate\'s Cairn',
+  'Wetland Park',
+  'Ta Kwu Ling',
+  'King\'s Park',
+  'Hong Kong Park',
+  'Hong Kong Observatory'
+];
+
+function renderDistricts() {
+  const grid = document.getElementById('district-grid');
+  HKO_DISTRICTS.forEach(d => {
+    const tag = document.createElement('div');
+    tag.className = 'district-tag';
+    tag.textContent = d;
+    grid.appendChild(tag);
+  });
+}
+
+function copyURL(btn) {
+  const url = 'https://data.weather.gov.hk/weatherAPI/opendata/weather.php?dataType=rhrread&lang=en';
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+renderDistricts();
+</script>
+</body>
+</html>
